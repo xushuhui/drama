@@ -1,29 +1,23 @@
 package main
 
-var template = `package schema
+var TemplateMain = `package schema
 
 import (
-    "time"
-
     "entgo.io/ent"
-    "entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/field"
 )
-
 
 type %s struct {
     ent.Schema
 }
 
-// Fields of the user.
 func (%s) Fields() []ent.Field {
-    return []ent.Field
+    return []ent.Field{
+        %s
+    }
 }`
 
-var fields = `
-	{
-        field.Int("age"),
-        field.String("name"),
-        field.String("username").Unique(),
-        field.Time("created_at").Default(time.Now),
-    }
-`
+var DataTypeMap = map[string]string{
+	"int": "Int", "tinyint": "Int8", "bigint": "Int", "varchar": "String", "char": "String", "datetime": "Time", "date": "Time",
+	"text": "Text", "decimal": "Float", "longtext": "Text",
+}

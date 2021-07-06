@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"io/ioutil"
 	"log"
+	"os"
+	"strings"
 )
 
 var db *sql.DB
@@ -19,18 +22,56 @@ type TableStruct struct {
 }
 
 func main() {
-	db, err = sql.Open("mysql",
-		"root@tcp(127.0.0.1:3306)/information_schema")
+	dsn := "root@tcp(127.0.0.1:3306)/information_schema"
+	schema := "mall"
+	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
-	schema := "ad"
+	dir := "./schema/"
 	tables := ListTables(schema)
+	is, _ := PathExists(dir)
+	if !is {
+		os.Mkdir(dir, os.ModePerm)
+	}
+
 	for _, v := range tables {
+
 		columns := ListColumns(schema, v)
-		fmt.Println(columns)
+		var fields []string
+		for _, v := range columns {
+			//id 主键字段已经内置
+			if v.columnKey == "PRI" {
+				continue
+			}
+			field := makeField(v)
+			fields = append(fields, field)
+		}
+		t := camelString(v)
+		f := strings.Join(fields, "\n\t\t")
+		str := fmt.Sprintf(TemplateMain, t, t, f)
+
+		generateFile(dir+v+".go", str)
+	}
+
+}
+func makeField(v TableStruct) string {
+
+	fieldStr := `field.` + DataTypeMap[v.dataType] + `("` + v.columnName + `").Comment("` + v.columnComment + `")`
+	if v.columnKey == "MUL" && DataTypeMap[v.dataType] != "Time" {
+		fieldStr = fieldStr + ".Unique()"
+	}
+	fieldStr = fieldStr + ","
+	return fieldStr
+
+}
+func generateFile(filename string, str string) {
+
+	err := ioutil.WriteFile(filename, []byte(str), os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 }
@@ -58,10 +99,12 @@ func ListTables(schema string) (tables []string) {
 	for rows.Next() {
 		var t string
 		rows.Scan(&t)
+
 		tables = append(tables, t)
 	}
 	return
 }
+
 func DoQuery(sqlInfo string, args ...interface{}) ([]map[string]interface{}, error) {
 	rows, err := db.Query(sqlInfo, args...)
 	if err != nil {
