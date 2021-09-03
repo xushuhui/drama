@@ -19,5 +19,5 @@ func (%s) Fields() []ent.Field {
 
 var DataTypeMap = map[string]string{
 	"int": "Int", "tinyint": "Int8", "bigint": "Int", "varchar": "String", "char": "String", "datetime": "Time", "date": "Time",
-	"text": "Text", "decimal": "Float", "longtext": "Text",
+	"text": "Text", "decimal": "Float", "longtext": "Text","json":"Json","smallint":"Int",
 }

@@ -1,4 +1,4 @@
-module table2ent
+module sql2ent
 
 go 1.15
 
